@@ -1,0 +1,1 @@
+{"version":3,"file":"unityWebSocket.js","sourceRoot":"","sources":["../../../src/unity/unityWebSocket.ts"],"names":[],"mappings":"AAAA,OAAO,SAAS,MAAM,IAAI,CAAC;AAE3B,MAAM,UAAU,gBAAgB,CAAC,GAAG,GAAG,OAAO,CAAC,GAAG,CAAC,WAAW,IAAI,qBAAqB;IACrF,OAAO,IAAI,SAAS,CAAC,GAAG,CAAC,CAAC;AAC5B,CAAC"}
