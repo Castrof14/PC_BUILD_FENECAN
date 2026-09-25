@@ -347,7 +347,7 @@ npm install
 Crie um arquivo `.env`:
 
 ```env
-PORT=3000
+PORT=8080
 DATABASE_URL=
 ```
 
@@ -364,13 +364,13 @@ npm run dev
 O servidor deverá ficar disponível em:
 
 ```text
-http://localhost:3000
+http://localhost:8080
 ```
 
 Teste:
 
 ```text
-GET http://localhost:3000/health
+GET http://localhost:8080/health
 ```
 
 ## Testando o envio de uma montagem
@@ -378,7 +378,7 @@ GET http://localhost:3000/health
 Exemplo utilizando `curl`:
 
 ```bash
-curl -X POST http://localhost:3000/build \
+curl -X POST http://localhost:8080/build \
   -H "Content-Type: application/json" \
   -d '{
     "cpu": "ryzen-5-5600",
