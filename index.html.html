@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1E4620">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="PC Build Simulator — projeto acadêmico da Faculdade Serra Dourada (Canaã dos Carajás/PA). Monte seu PC e acompanhe a montagem em tempo real.">
+  <title>PC Build Simulator · Faculdade Serra Dourada</title>
+
+  <!-- Fontes (Google Fonts): display = Space Grotesk · corpo = Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+/* ============================================================
+   PC BUILD SIMULATOR — style.css
+   Faculdade Serra Dourada · Canaã dos Carajás — PA
+
+   Identidade visual (cores da logo Serra Dourada):
+   ─ verde floresta . . . #1E4620  (principal, botões e títulos)
+   ─ dourado/terracota . . #D97B29  (destaques: seleção, progresso, números)
+   ─ off-white . . . . . . #F7F7F2  (fundo)
+   ─ cinza esverdeado . . . #5B6657 (textos secundários)
+
+   Paleta derivada (tons de apoio, SEM gradientes neon/genéricos):
+   ─ #143016 (verde quase-preto) · #2F6B33 (verde serra ao fundo)
+   ─ #F8EAD9 (laranja clarinho p/ seleção) · #E7EEE6 (verde clarinho p/ selos)
+
+   Organização do arquivo:
+     01. Tokens (variáveis)
+     02. Reset / base
+     03. Cabeçalho fixo (.topbar)
+     04. Telas e navegação (.screen · :target · .active)
+     05. Botões (.btn)
+     06. Elementos de texto (eyebrow, build-number, títulos)
+     07. Tela inicial  (#screen-home)
+     08. Componentes   (#screen-components)
+     09. Fila / Status (#screen-status)
+     10. Montagem      (#screen-montage)
+     11. Acessibilidade e telas grandes
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   01. TOKENS
+   ------------------------------------------------------------ */
+:root {
+  /* cores da marca */
+  --green-900: #143016;
+  --green-700: #1E4620;
+  --green-600: #265A29;
+  --green-500: #2F6B33;
+  --green-100: #E7EEE6;
+
+  --orange-600: #C46E1F;
+  --orange-500: #D97B29;
+  --orange-100: #F8EAD9;
+
+  --bg:        #F7F7F2;
+  --surface:   #FFFFFF;
+  --ink:       #20301F;   /* texto principal (preto esverdeado) */
+  --gray:      #5B6657;   /* texto secundário */
+  --line:      #E2E6DC;   /* divisores e bordas */
+
+  /* tipografia */
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-body:    'Inter', 'Segoe UI', system-ui, sans-serif;
+
+  /* forma e profundidade */
+  --radius-card: 18px;
+  --radius-btn:  14px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 2px rgba(30, 70, 32, .05),
+                 0 10px 28px rgba(30, 70, 32, .08);
+  --shadow-btn:  0 10px 22px rgba(30, 70, 32, .28);
+
+  /* coluna central (visual "app" no desktop) */
+  --maxw: 480px;
+}
+
+/* ------------------------------------------------------------
+   02. RESET / BASE
+   ------------------------------------------------------------ */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink);
+  background-color: var(--bg);
+
+  /* fundo com leve grid + pontilhado (padrão de circuito, bem sutil) */
+  background-image:
+    radial-gradient(rgba(30, 70, 32, .07) 1px, transparent 1.4px),
+    repeating-linear-gradient(0deg,  rgba(30, 70, 32, .035) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(90deg, rgba(30, 70, 32, .035) 0 1px, transparent 1px 48px);
+  background-size: 26px 26px, 100% 48px, 48px 100%;
+  background-repeat: repeat;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, p, ul, ol {
+  margin: 0;
+}
+
+ul, ol { list-style: none; padding: 0; }
+
+a { color: inherit; }
+
+button { font: inherit; }
+
+::selection { background: var(--green-700); color: #fff; }
+
+/* ------------------------------------------------------------
+   03. CABEÇALHO FIXO (.topbar)
+   ------------------------------------------------------------ */
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 20px 8px;
+}
+
+.topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.topbar .logo {
+  width: auto;
+  height: 36px;
+  flex: none;
+  display: block;
+}
+
+.topbar__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.topbar__name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: .82rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--green-700);
+}
+
+.topbar__sub {
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+/* selo "ao vivo" */
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 7px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--green-100);
+  color: var(--green-700);
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.live__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--orange-500);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%      { transform: scale(.7);  opacity: .55; }
+}
+
+/* ------------------------------------------------------------
+   04. TELAS E NAVEGAÇÃO
+   Uma tela por vez. Três mecanismos cooperam:
+   a) padrão: .screen.is-default (a #screen-home) aparece sem hash;
+   b) âncoras + :target (troca de tela SEM JavaScript);
+   c) classe .active (sincronizada pelo script — a lógica pode
+      consultar document.querySelector('.screen.active')).
+   Requer navegadores atuais (com :has, 2022+). Se precisar de
+   suporte antigo, mova a #screen-home para o final do documento
+   e use o truque clássico: .screen:target ~ .screen { display:none }
+   ------------------------------------------------------------ */
+.app {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  padding: 12px 20px calc(env(safe-area-inset-bottom, 0px) + 16px);
+}
+
+/* (a) tela inicial é o padrão (classe .is-default, baixa especificidade
+       para as regras "esconder as demais" abaixo conseguirem prevalecer) */
+.screen.is-default { display: flex; }
+
+/* (b) navegação por âncora */
+.screen:target,
+.screen.active { display: flex; }
+
+/* esconde as demais quando alguém está visível */
+body:has(.screen:target)  .screen:not(:target) { display: none; }
+body:has(.screen.active)  .screen:not(.active) { display: none; }
+
+/* entrada suave da tela ativa */
+.screen.is-default,
+.screen:target,
+.screen.active {
+  animation: screen-in .38s ease both;
+}
+
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ------------------------------------------------------------
+   05. BOTÕES (.btn)
+   Altura mínima 54px — área de toque confortável (> 48px).
+   ------------------------------------------------------------ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--radius-btn);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: .95rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .2s ease, background-color .2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:active { transform: scale(.98); }
+
+.btn:focus-visible {
+  outline: 3px solid var(--orange-500);
+  outline-offset: 2px;
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.btn--primary {
+  background: var(--green-700);
+  color: #fff;
+  box-shadow: var(--shadow-btn);
+}
+
+.btn--primary:hover { background: var(--green-600); }
+
+.btn--ghost {
+  background: var(--surface);
+  color: var(--green-700);
+  border: 1.5px solid var(--green-700);
+  box-shadow: none;
+}
+
+.btn--ghost:hover { background: var(--green-100); }
+
+.btn--block { width: 100%; }
+
+/* ------------------------------------------------------------
+   06. ELEMENTOS DE TEXTO
+   ------------------------------------------------------------ */
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+.accent { color: var(--orange-500); }
+
+/* número da build em destaque */
+.build-number {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  margin: 16px 0 6px;
+}
+
+.build-number__tag {
+  font-family: var(--font-display);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+.build-number__num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.3rem, 11vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: -.01em;
+  color: var(--green-900);
+  font-variant-numeric: tabular-nums;
+}
+
+/* cabeçalho de cada tela (fora da inicial) */
+.screen-head { margin-bottom: 16px; }
+
+.screen-head h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.45rem, 6vw, 1.9rem);
+  line-height: 1.1;
+  color: var(--green-900);
+  margin-top: 4px;
+}
+
+/* link "voltar" */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin: 2px 0 18px;
+  padding: 6px 0;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--gray);
+  text-decoration: none;
+}
+
+.back-link svg { width: 14px; height: 14px; }
+
+.back-link:hover { color: var(--green-700); }
+
+/* ------------------------------------------------------------
+   07. TELA INICIAL (#screen-home)
+   ------------------------------------------------------------ */
+.screen#screen-home {
+  position: relative;
+  overflow: hidden;
+}
+
+.home__inner {
+  position: relative;
+  z-index: 1;            /* fica acima da silhueta de serra */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 3vh;
+}
+
+.hero {
+  margin: auto 0;
+  text-align: center;
+}
+
+.logo--hero {
+  width: clamp(84px, 22vw, 108px);
+  height: auto;
+  margin: 0 auto 18px;
+  display: block;
+}
+
+.hero__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.1rem, 10.5vw, 3.2rem);
+  line-height: 1.02;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  color: var(--green-900);
+  margin-top: 10px;
+}
+
+.hero__title-accent {
+  display: block;
+  color: var(--orange-500);
+}
+
+.hero__subtitle {
+  max-width: 34ch;
+  margin: 14px auto 0;
+  font-size: .98rem;
+  color: var(--gray);
+}
+
+.feature-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 20px 0 30px;
+}
+
+.feature-chips li {
+  font-size: .76rem;
+  font-weight: 600;
+  color: var(--green-700);
+  background: var(--green-100);
+  border: 1px solid rgba(30, 70, 32, .14);
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+}
+
+.site-footer {
+  margin-top: auto;
+  padding: 16px 0 2px;
+  font-size: .72rem;
+  line-height: 1.6;
+  color: var(--gray);
+  text-align: center;
+}
+
+/* silhueta de serra decorativa no rodapé da tela */
+.home__ridge {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -1px;
+  width: 120%;
+  height: 30%;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------
+   08. COMPONENTES (#screen-components)
+   ------------------------------------------------------------ */
+/* indicador de etapas (config → fila → montagem) */
+.stepper {
+  display: flex;
+  gap: 6px;
+  margin: 14px 0 0;
+}
+
+.stepper__bar {
+  flex: 1;
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--line);
+}
+
+.stepper__bar.is-on { background: var(--orange-500); }
+
+.card-list {
+  display: grid;
+  gap: 14px;
+}
+
+/* card de categoria de peça */
+.part-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+}
+
+.part-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.part-card__icon {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--green-100);
+  color: var(--green-700);
+}
+
+.part-card__icon svg { width: 22px; height: 22px; }
+
+.part-card__text { min-width: 0; }
+
+.part-card__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--green-900);
+}
+
+.part-card__hint {
+  margin-top: 2px;
+  font-size: .8rem;
+  color: var(--gray);
+}
+
+/* selo com a peça escolhida (preenchido pelo script de exemplo) */
+.part-card__pick {
+  margin-left: auto;
+  flex: none;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .76rem;
+  font-weight: 600;
+  color: var(--orange-600);
+  text-align: right;
+}
+
+/* lista de opções de um card */
+.option-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* item selecionável — radio nativo escondido, visual próprio */
+.choice {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.choice__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.choice__inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 54px;
+  padding: 9px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  transition: border-color .15s ease, background-color .15s ease;
+}
+
+.choice__input:checked + .choice__inner {
+  border-color: var(--orange-500);
+  background: var(--orange-100);
+}
+
+.choice__input:focus-visible + .choice__inner {
+  outline: 3px solid var(--orange-500);
+  outline-offset: 2px;
+}
+
+.choice__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.choice__name {
+  font-size: .93rem;
+  font-weight: 600;
+  color: var(--ink);
+  transition: color .15s ease;
+}
+
+.choice__input:checked + .choice__inner .choice__name { color: var(--green-700); }
+
+.choice__meta {
+  margin-top: 1px;
+  font-size: .76rem;
+  color: var(--gray);
+}
+
+/* indicador radial à direita (preenche quando selecionado) */
+.choice__radio {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin-left: auto;
+  border-radius: 50%;
+  border: 2px solid var(--gray);
+  position: relative;
+  transition: border-color .15s ease;
+}
+
+.choice__input:checked + .choice__inner .choice__radio {
+  border-color: var(--orange-500);
+}
+
+.choice__input:checked + .choice__inner .choice__radio::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--orange-500);
+}
+
+/* barra de ação fixa no rodapé dos componentes */
+.actionbar {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  padding: 12px 0 calc(env(safe-area-inset-bottom, 0px) + 12px);
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+}
+
+.actionbar__note {
+  margin-bottom: 10px;
+  font-size: .8rem;
+  color: var(--gray);
+  text-align: center;
+}
+
+.actionbar__note b {
+  color: var(--green-700);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------
+   09. FILA / STATUS (#screen-status)
+   ------------------------------------------------------------ */
+.status-hero { text-align: center; }
+
+/* selo de "recebido" com anel pulsando */
+.check-badge {
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  margin: 6px auto 0;
+  border-radius: 50%;
+  background: var(--green-100);
+  color: var(--green-700);
+  animation: breathe 2.6s ease-in-out infinite;
+}
+
+.check-badge svg { width: 38px; height: 38px; }
+
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(30, 70, 32, .16); }
+  50%      { box-shadow: 0 0 0 14px rgba(30, 70, 32, 0); }
+}
+
+.status-ok {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.12rem;
+  color: var(--green-900);
+}
+
+.status-sub {
+  max-width: 34ch;
+  margin: 6px auto 0;
+  font-size: .88rem;
+  color: var(--gray);
+}
+
+/* cartão da posição na fila */
+.queue-card {
+  margin-top: 20px;
+  padding: 22px 18px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.queue-card__label {
+  font-family: var(--font-display);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+.queue-card__count {
+  display: grid;
+  justify-items: center;
+  margin-top: 6px;
+}
+
+.queue-card__pos {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(4rem, 24vw, 6rem);
+  line-height: 1;
+  color: var(--green-700);
+  font-variant-numeric: tabular-nums;
+}
+
+.queue-card__of {
+  margin-top: 4px;
+  font-size: .84rem;
+  color: var(--gray);
+}
+
+.queue-card__of b { color: var(--green-900); }
+
+.queue-card__eta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 16px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--orange-100);
+  color: var(--orange-600);
+  font-size: .82rem;
+  font-weight: 600;
+}
+
+.queue-card__eta b { color: var(--orange-600); }
+
+.queue-card__eta svg { width: 15px; height: 15px; flex: none; }
+
+/* resumo da build enviada */
+.summary {
+  margin-top: 14px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+}
+
+.summary__title {
+  font-family: var(--font-display);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--green-700);
+  margin-bottom: 6px;
+}
+
+.summary__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.summary__row:last-child { border-bottom: 0; }
+
+.summary__k {
+  flex: none;
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+.summary__v {
+  font-size: .86rem;
+  font-weight: 600;
+  color: var(--green-900);
+  text-align: right;
+}
+
+/* "aguarde sua vez" com reticências animadas */
+.waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 22px;
+  font-size: .95rem;
+  color: var(--gray);
+}
+
+.dots { display: inline-flex; gap: 3px; margin-left: 6px; }
+
+.dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--orange-500);
+  animation: blink 1.4s infinite both;
+}
+
+.dots i:nth-child(2) { animation-delay: .2s; }
+.dots i:nth-child(3) { animation-delay: .4s; }
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: .25; transform: translateY(0); }
+  40%           { opacity: 1;   transform: translateY(-3px); }
+}
+
+.actionbar-extra { margin-top: 14px; }
+
+/* ------------------------------------------------------------
+   10. MONTAGEM (#screen-montage)
+   ------------------------------------------------------------ */
+.mount-hero { text-align: center; }
+
+.mount-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 6.5vw, 2rem);
+  line-height: 1.15;
+  color: var(--green-900);
+}
+
+/* barra de progresso (CSS puro)
+   Pessoa 13: ao controlar por API, remova a animação 'build-progress'
+   de .progress__fill e use style.width (0 → 100%). */
+.progress {
+  position: relative;
+  height: 14px;
+  margin-top: 24px;
+  border-radius: var(--radius-pill);
+  background: var(--line);
+  overflow: hidden;
+}
+
+/* marcas finas de escala sobre a trilha */
+.progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(32, 48, 31, .10) 0 1px,
+    transparent 1px 24px
+  );
+  pointer-events: none;
+}
+
+.progress__fill {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  width: 6%;
+  border-radius: var(--radius-pill);
+  background: var(--orange-500);
+  animation: build-progress 16s cubic-bezier(.45, .05, .35, 1) infinite alternate;
+}
+
+/* estado concluído (gancho para a Pessoa 13):
+   .screen#screen-montage.is-done .progress__fill { width: 100% !important; } */
+
+@keyframes build-progress {
+  from { width: 6%; }
+  to   { width: 94%; }
+}
+
+.progress__labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: .8rem;
+  color: var(--gray);
+}
+
+.progress__stage { color: var(--green-900); font-weight: 600; }
+
+.progress__eta { font-variant-numeric: tabular-nums; }
+
+/* checklist de etapas da montagem */
+.checklist {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 18px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.checklist__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: .9rem;
+  color: var(--gray);
+  opacity: 0;
+  animation: item-in .45s ease forwards;
+}
+
+.checklist__item:nth-child(2) { animation-delay: .55s; }
+.checklist__item:nth-child(3) { animation-delay: 1.1s; }
+.checklist__item:nth-child(4) { animation-delay: 1.65s; }
+
+@keyframes item-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.checklist__mark {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: var(--surface);
+  color: transparent;
+}
+
+.checklist__mark svg { width: 14px; height: 14px; }
+
+.checklist__item.is-done { color: var(--green-900); }
+
+.checklist__item.is-done .checklist__mark {
+  background: var(--green-700);
+  border-color: var(--green-700);
+  color: #fff;
+}
+
+/* etapa em andamento (anel laranja pulsando) */
+.checklist__item.is-now {
+  color: var(--green-900);
+  font-weight: 600;
+}
+
+.checklist__item.is-now .checklist__mark {
+  border-color: var(--orange-500);
+  color: var(--orange-500);
+  animation: breathe 1.6s ease-in-out infinite;
+}
+
+.mount-note {
+  margin-top: 18px;
+  font-size: .8rem;
+  color: var(--gray);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------
+   11. ACESSIBILIDADE E TELAS GRANDES
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       MAPA DAS TELAS — todas no mesmo documento, alternadas por CSS
+       ------------------------------------------------------------
+       #screen-home        → Tela inicial
+       #screen-components  → Escolha de componentes (Pessoa 12 injeta
+                             o catálogo JSON nos blocos #catalog-*)
+       #screen-status      → Fila / posição (Pessoa 13 liga na API)
+       #screen-montage     → Montagem em andamento (Pessoa 13 liga na API)
+
+       Navegação: âncoras (#screen-X) + seletor :target no CSS.
+       A classe .active fica sincronizada para a lógica consultar.
+       Helper para a lógica: showScreen('screen-status')
+       ============================================================ -->
+
+  <!-- Cabeçalho fixo — identidade Serra Dourada -->
+  <header class="topbar">
+    <div class="topbar__brand">
+      <!-- Marca: escudo oficial da Faculdade Serra Dourada -->
+      <img class="logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 128' role='img' aria-label='Faculdade Serra Dourada'%3E %3Cdefs%3E%3CclipPath id='sd-shield'%3E%3Cpath d='M0 0H100V74C100 100 76 118 50 128C24 118 0 100 0 74Z'/%3E%3C/clipPath%3E%3C/defs%3E %3Cg clip-path='url%28%23sd-shield%29'%3E %3Crect width='100' height='128' fill='%23004E38'/%3E %3Cpath d='M0 80Q25 76 50 86Q75 76 100 80V128H0Z' fill='%23EC721C'/%3E %3Cpath d='M0 100Q26 94 50 106Q74 94 100 100V128H0Z' fill='%23CA6316'/%3E %3Cg fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E %3Cpath d='M-2 56L26 28L36 38M64 34L76 20L102 48'/%3E %3Cpath d='M-2 80Q25 76 50 86Q75 76 102 80'/%3E %3Cpath d='M-2 100Q26 94 50 106Q74 94 102 100'/%3E %3C/g%3E %3Cpath d='M50 12C69 30 73 60 50 86C27 60 31 30 50 12Z' fill='%23004E38' stroke='%23fff' stroke-width='3.2' stroke-linejoin='round'/%3E %3Cpath d='M50 26V130M50 60L57 51' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E %3C/g%3E %3C/svg%3E" alt="Faculdade Serra Dourada">
+      <div class="topbar__text">
+        <span class="topbar__name">Serra Dourada</span>
+        <span class="topbar__sub">PC Build Simulator</span>
+      </div>
+    </div>
+    <span class="live"><span class="live__dot" aria-hidden="true"></span>Ao vivo</span>
+  </header>
+
+  <main class="app">
+
+    <!-- ============================================================
+         TELA 1 — INÍCIO
+         ============================================================ -->
+    <section class="screen is-default" id="screen-home">
+      <div class="home__inner">
+
+        <div class="hero">
+          <img class="logo logo--hero" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 128' role='img' aria-label='Faculdade Serra Dourada'%3E %3Cdefs%3E%3CclipPath id='sd-shield'%3E%3Cpath d='M0 0H100V74C100 100 76 118 50 128C24 118 0 100 0 74Z'/%3E%3C/clipPath%3E%3C/defs%3E %3Cg clip-path='url%28%23sd-shield%29'%3E %3Crect width='100' height='128' fill='%23004E38'/%3E %3Cpath d='M0 80Q25 76 50 86Q75 76 100 80V128H0Z' fill='%23EC721C'/%3E %3Cpath d='M0 100Q26 94 50 106Q74 94 100 100V128H0Z' fill='%23CA6316'/%3E %3Cg fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E %3Cpath d='M-2 56L26 28L36 38M64 34L76 20L102 48'/%3E %3Cpath d='M-2 80Q25 76 50 86Q75 76 102 80'/%3E %3Cpath d='M-2 100Q26 94 50 106Q74 94 102 100'/%3E %3C/g%3E %3Cpath d='M50 12C69 30 73 60 50 86C27 60 31 30 50 12Z' fill='%23004E38' stroke='%23fff' stroke-width='3.2' stroke-linejoin='round'/%3E %3Cpath d='M50 26V130M50 60L57 51' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E %3C/g%3E %3C/svg%3E" alt="Faculdade Serra Dourada">
+
+          <p class="eyebrow">Faculdade Serra Dourada · Canaã dos Carajás — PA</p>
+
+          <h1 class="hero__title">
+            <span>PC Build</span>
+            <span class="hero__title-accent">Simulator</span>
+          </h1>
+
+          <p class="hero__subtitle">Monte sua máquina do zero, envie para a fila e acompanhe a montagem em tempo real.</p>
+
+          <ul class="feature-chips">
+            <li>4 categorias de peças</li>
+            <li>Fila ao vivo</li>
+            <li>Acompanhamento em tempo real</li>
+          </ul>
+
+          <a href="#screen-components" class="btn btn--primary btn--block">
+            Começar
+            <!-- seta → -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </a>
+        </div>
+
+        <footer class="site-footer">
+          Projeto acadêmico · PC Build Simulator<br>
+          Faculdade Serra Dourada — Canaã dos Carajás/PA · 2026
+        </footer>
+      </div>
+
+      <!-- Silhueta de serra decorativa (baixa opacidade, fundo da tela) -->
+      <svg class="home__ridge" viewBox="0 0 400 96" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 96 L70 40 L128 88 L196 16 L270 90 L330 48 L400 96 Z" fill="#1E4620" opacity="0.05"/>
+        <path d="M0 96 L120 56 L220 96 Z" fill="#2F6B33" opacity="0.05"/>
+      </svg>
+    </section>
+
+    <!-- ============================================================
+         TELA 2 — COMPONENTES
+         ============================================================ -->
+    <section class="screen" id="screen-components">
+
+      <div class="screen-head">
+        <p class="eyebrow">Configuração da build</p>
+        <h1>Escolha seus componentes</h1>
+        <!-- indicador de etapas: config → fila → montagem -->
+        <div class="stepper" aria-hidden="true">
+          <span class="stepper__bar is-on"></span>
+          <span class="stepper__bar"></span>
+          <span class="stepper__bar"></span>
+        </div>
+      </div>
+
+      <div class="card-list">
+
+        <!-- ============================================================
+             CARD: PROCESSADOR
+             PONTO DE INTEGRAÇÃO — Pessoa 12:
+             injete as opções vindas do catálogo (JSON) dentro de
+             #catalog-cpu, mantendo o padrão de markup .choice
+             (name + meta) para o CSS continuar funcionando.
+             ============================================================ -->
+        <article class="part-card" id="part-cpu">
+          <header class="part-card__head">
+            <span class="part-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="6" y="6" width="12" height="12" rx="2"/>
+                <rect x="9.5" y="9.5" width="5" height="5" rx="1"/>
+                <path d="M9 2.5v3.5M15 2.5v3.5M9 18v3.5M15 18v3.5M2.5 9H6M2.5 15H6M18 9h3.5M18 15h3.5"/>
+              </svg>
+            </span>
+            <div class="part-card__text">
+              <h2 class="part-card__title">Processador</h2>
+              <p class="part-card__hint">O cérebro da máquina — defina o modelo</p>
+            </div>
+            <span class="part-card__pick" id="pick-cpu">—</span>
+          </header>
+
+          <div class="option-list" id="catalog-cpu">
+            <label class="choice">
+              <input class="choice__input" type="radio" name="cpu" value="ryzen-5-5600" data-label="Ryzen 5 5600" checked>
+              <span class="choice__inner">
+                <span class="choice__text">
+                  <span class="choice__name">Ryzen 5 5600</span>
+                  <span class="choice__meta">6 núcleos · 12 threads · AM4</span>
+                </span>
+                <span class="choice__radio" aria-hidden="true"></span>
+              </span>
+            </label>
+            <label class="choice">
+              <input class="choice__input" type="radio" name="cpu" value="ryzen-7-5700x" data-label="Ryzen 7 5700X">
+              <span class="choice__inner">
+                <span class="choice__text">
+                  <span class="choice__name">Ryzen 7 5700X</span>
+                  <span class="choice__meta">8 núcleos · 16 threads · AM4</span>
+                </span>
+                <span class="choice__radio" aria-hidden="true"></span>
+              </span>
+            </label>
+            <label class="choice">
+              <input class="choice__input" type="radio" name="cpu" value="i5-12400f" data-label="Core i5-12400F">
+              <span class="choice__inner">
+                <span class="choice__text">
+                  <span class="choice__name">Intel Core i5-12400F</span>
+                  <span class="choice__meta">6 núcleos · 12 threads · LGA 1700</span>
+                </span>
+                <span class="choice__radio" aria-hidden="true"></span>
+              </span>
+            </label>
+          </div>
+        </article>
+
+        <!-- ============================================================
+             CARD: PLACA DE VÍDEO
+             PONTO DE INTEGRAÇÃO — Pessoa 12: injete o catálogo em #catalog-gpu
+             ============================================================ -->
+        <article class="part-card" id="part-gpu">
+          <header class="part-card__head">
+            <span class="part-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2.5" y="7" width="19" height="10" rx="2"/>
+                <path d="M8 7v2.5M16 7v2.5"/>
+                <circle cx="8.2" cy="12" r="2.2"/>
+                <circle cx="15.8" cy="12" r="2.2"/>
+                <path d="M12 9.5v2.5"/>
+              </svg>
+            </span>
+            <div class="part-card__text">
+              <h2 class="part-card__title">Placa de vídeo</h2>
+              <p class="part-card__hint">Escolha a GPU da sua build</p>
+            </div>
+            <span class="part-card__pick" id="pick-gpu">—</span>
+          </header>
+
+          <div class="option-list" id="catalog-gpu">
+            <label class="choice">
+              <input class="choice__input" type="radio" name="gpu" value="rtx-4060" data-label="RTX 4060" checked>
+              <span class="choice__inner">
+                <span class="choice__text">
+                  <span class="choice__name">GeForce RTX 4060</span>
+                  <span class="choice__meta">8 GB GDDR6</span>
+                </span>
+                <span class="choice__radio" aria-hidden="true"></span>
+              </span>
+            </label>
+            <label class="choice">
+              <input class="choice__input" type="radio" name="gpu" value="rtx-4070" data-label="RTX 4070">
+              <span class="choice__inner">
+                <span class="choice__text">
+                  <span class="choice__name">GeForce RTX 4070</span>
+                  <span class="choice__meta">12 GB GDDR6X</span>
+                </span>
+                <span class="choice__radio" aria-hidden="true"></span>
+              </span>
+            </label>
+            <label class="choice">
+              <input class="choice__input" type="radio" name="gpu" value="rx-7600" data-label="RX 7600">
+              <span class="choice__inner">
+                <span class="choice__text">
+                  <span class="choice__name">Radeon RX 7600</span>
+                  <span class="choice__meta">8 GB GDDR6</span>
+                </span>
+                <span class="choice__radio" aria-hidden="true"></span>
+              </span>
+            </label>
+          </div>
+        </article>
+
+        <!-- ============================================================
+             CARD: MEMÓRIA RAM
+             PONTO DE INTEGRAÇÃO — Pessoa 12: injete o catálogo em #catalog-ram
+             ============================================================ -->
+        <article class="part-card" id="part-ram">
+          <header class="part-card__head">
+            <span class="part-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3.5h8V21H8z"/>
+                <path d="M10 3.5v3M14 3.5v3M10 14.5h4M10 18.5h4"/>
+                <path d="M4.5 7h3.5M4.5 11h3.5M4.5 15h3.5"/>
+              </svg>
+            </span>
+            <div class="part-card__text">
+              <h2 class="part-card__title">Memória RAM</h2>
+              <p class="part-card__hint">Capacidade de memória da máquina</p>
+            </div>
+            <span class="part-card__pick" id="pick-ram">—</span>
+          </header>
+
+          <div class="option-list" id="catalog-ram">
+            <label class="choice">
+              <input class="choice__input" type="radio" name="ram" value="ram-16-ddr4" data-label="16 GB (2×8)" checked>
+              <span class="choice__inner">
+                <span class="choice__text">
+                  <span class="choice__name">16 GB — 2× 8 GB</span>
+                  <span class="choice__meta">DDR4 · 3200 MHz</span>
+                </span>
+                <span class="choice__radio" aria-hidden="true"></span>
+              </span>
+            </label>
+            <label class="choice">
+              <input class="choice__input" type="radio" name="ram" value="ram-32-ddr4" data-label="32 GB (2×16)">
+              <span class="choice__inner">
+                <span class="choice__text">
+                  <span class="choice__name">32 GB — 2× 16 GB</span>
+                  <span class="choice__meta">DDR4 · 3200 MHz</span>
+                </span>
+                <span class="choice__radio" aria-hidden="true"></span>
+              </span>
+            </label>
+            <label class="choice">
+              <input class="choice__input" type="radio" name="ram" value="ram-32-ddr5" data-label="32 GB (2×16)">
+              <span class="choice__inner">
+                <span class="choice__text">
+                  <span class="choice__name">32 GB — 2× 16 GB</span>
+                  <span class="choice__meta">DDR5 · 5200 MHz</span>
+                </span>
+                <span class="choice__radio" aria-hidden="true"></span>
+              </span>
+            </label>
+          </div>
+        </article>
+
+        <!-- ============================================================
+             CARD: ARMAZENAMENTO (SSD)
+             PONTO DE INTEGRAÇÃO — Pessoa 12: injete o catálogo em #catalog-ssd
+             ============================================================ -->
+        <article class="part-card" id="part-ssd">
+          <header class="part-card__head">
+            <span class="part-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2.5" y="8.5" width="19" height="7" rx="1.5"/>
+                <path d="M12 8.5v1.5M12 14.5V16"/>
+                <path d="M7 12h.01M10.5 12h.01M17 10.8v2.4"/>
+                <path d="M7.5 8.5V6.5h2v2"/>
+              </svg>
+            </span>
+            <div class="part-card__text">
+              <h2 class="part-card__title">Armazenamento</h2>
+              <p class="part-card__hint">SSD NVMe — espaço para o sistema e jogos</p>
+            </div>
+            <span class="part-card__pick" id="pick-ssd">—</span>
+          </header>
+
+          <div class="option-list" id="catalog-ssd">
+            <label class="choice">
+              <input class="choice__input" type="radio" name="ssd" value="ssd-512" data-label="512 GB NVMe" checked>
+              <span class="choice__inner">
+                <span class="choice__text">
+                  <span class="choice__name">512 GB</span>
+                  <span class="choice__meta">NVMe · leitura até 3.500 MB/s</span>
+                </span>
+                <span class="choice__radio" aria-hidden="true"></span>
+              </span>
+            </label>
+            <label class="choice">
+              <input class="choice__input" type="radio" name="ssd" value="ssd-1tb" data-label="1 TB NVMe">
+              <span class="choice__inner">
+                <span class="choice__text">
+                  <span class="choice__name">1 TB</span>
+                  <span class="choice__meta">NVMe · leitura até 5.000 MB/s</span>
+                </span>
+                <span class="choice__radio" aria-hidden="true"></span>
+              </span>
+            </label>
+            <label class="choice">
+              <input class="choice__input" type="radio" name="ssd" value="ssd-2tb" data-label="2 TB NVMe">
+              <span class="choice__inner">
+                <span class="choice__text">
+                  <span class="choice__name">2 TB</span>
+                  <span class="choice__meta">NVMe · leitura até 5.000 MB/s</span>
+                </span>
+                <span class="choice__radio" aria-hidden="true"></span>
+              </span>
+            </label>
+          </div>
+        </article>
+      </div>
+
+      <!-- Barra de ação fixa no rodapé (continua visível ao rolar) -->
+      <footer class="actionbar">
+        <p class="actionbar__note">
+          <!-- contador preenchido por refreshSummary() — Pessoas 12/13 podem validar aqui -->
+          Você selecionou <b id="parts-count">0/4</b> categorias
+        </p>
+        <a href="#screen-status" class="btn btn--primary btn--block">
+          Continuar
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6"/>
+          </svg>
+        </a>
+      </footer>
+    </section>
+
+    <!-- ============================================================
+         TELA 3 — STATUS / FILA
+         Números abaixo são exemplos estáticos.
+         Pessoa 13: atualize #build-number, #queue-position, #queue-total,
+         #queue-eta e #summary-* vindos da API/broker da fila.
+         ============================================================ -->
+    <section class="screen" id="screen-status">
+
+      <a href="#screen-components" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.5 5L8 12l6.5 7"/>
+        </svg>
+        Voltar
+      </a>
+
+      <div class="status-hero">
+        <span class="check-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9.5"/>
+            <path d="M8.2 12.4l2.7 2.7 5-5.2"/>
+          </svg>
+        </span>
+
+        <p class="build-number">
+          <span class="build-number__tag">Build</span>
+          <!-- Pessoa 13: número real da build vem do servidor -->
+          <span class="build-number__num" id="build-number">#027</span>
+        </p>
+
+        <p class="status-ok">Configuração recebida</p>
+        <p class="status-sub">Seus componentes foram validados e entraram na fila de montagem.</p>
+      </div>
+
+      <div class="queue-card">
+        <p class="queue-card__label">Sua posição na fila</p>
+        <p class="queue-card__count">
+          <!-- Pessoa 13: atualize #queue-position conforme a fila anda -->
+          <span class="queue-card__pos" id="queue-position">03</span>
+          <span class="queue-card__of">de <b id="queue-total">12</b> builds na fila</span>
+        </p>
+        <p class="queue-card__eta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v5l3.5 2.2"/>
+          </svg>
+          Previsão de início: <b id="queue-eta">~12 min</b>
+        </p>
+      </div>
+
+      <!-- Resumo do pedido (preenchido pela seleção da tela anterior) -->
+      <div class="summary">
+        <p class="summary__title">Resumo da build</p>
+        <p class="summary__row"><span class="summary__k">Processador</span><span class="summary__v" id="summary-cpu">—</span></p>
+        <p class="summary__row"><span class="summary__k">Placa de vídeo</span><span class="summary__v" id="summary-gpu">—</span></p>
+        <p class="summary__row"><span class="summary__k">Memória ram</span><span class="summary__v" id="summary-ram">—</span></p>
+        <p class="summary__row"><span class="summary__k">Armazenamento</span><span class="summary__v" id="summary-ssd">—</span></p>
+      </div>
+
+      <p class="waiting">
+        Aguarde sua vez
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      </p>
+
+      <!-- Pessoa 13: este botão entra no ar quando a posição chegar em 0 -->
+      <a href="#screen-montage" class="btn btn--ghost btn--block actionbar-extra">Acompanhar a montagem</a>
+    </section>
+
+    <!-- ============================================================
+         TELA 4 — MONTAGEM
+         Barra de progresso animada em CSS puro.
+         Pessoa 13: quando a lógica real entrar, remova a animação e
+         controle o #build-progress-fill via style.width (de 0 a 100%).
+         ============================================================ -->
+    <section class="screen" id="screen-montage">
+
+      <a href="#screen-status" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.5 5L8 12l6.5 7"/>
+        </svg>
+        Voltar
+      </a>
+
+      <div class="mount-hero">
+        <p class="eyebrow">Montagem em andamento</p>
+
+        <p class="build-number">
+          <span class="build-number__tag">Build</span>
+          <span class="build-number__num" id="mount-build-number">#027</span>
+        </p>
+
+        <h1 class="mount-title">Sua build está <span class="accent">sendo montada!</span></h1>
+        <p class="status-sub">Cada etapa é conferida e registrada em tempo real.</p>
+      </div>
+
+      <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="40" aria-label="Progresso da montagem">
+        <div class="progress__fill" id="build-progress-fill"></div>
+      </div>
+      <div class="progress__labels">
+        <span class="progress__stage" id="mount-stage">Instalando placa de vídeo</span>
+        <span class="progress__eta" id="mount-eta">~14 min restantes</span>
+      </div>
+
+      <!-- Checklist de etapas — Pessoa 13: alterne as classes .is-done/.is-now -->
+      <ol class="checklist">
+        <li class="checklist__item is-done">
+          <span class="checklist__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 8"/></svg>
+          </span>
+          Processador instalado no socket
+        </li>
+        <li class="checklist__item is-done">
+          <span class="checklist__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 8"/></svg>
+          </span>
+          Memória RAM encaixada
+        </li>
+        <li class="checklist__item is-now">
+          <span class="checklist__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 8"/></svg>
+          </span>
+          Placa de vídeo instalada
+        </li>
+        <li class="checklist__item">
+          <span class="checklist__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 8"/></svg>
+          </span>
+          SSD, cabos, térmica e testes finais
+        </li>
+      </ol>
+
+      <p class="mount-note">Não feche esta tela — você será avisado assim que a build for concluída.</p>
+    </section>
+
+  </main>
+
+  <script>
+  /* ==============================================================
+     NAVEGAÇÃO + GANCHOS DE DEMO (sem frameworks, sem lógica pesada)
+     --------------------------------------------------------------
+     - A troca de telas funciona 100% em CSS (âncoras + :target).
+     - Este bloco só mantém a classe .active sincronizada com a tela
+       visível e atualiza rótulos de exemplo da seleção de peças.
+     - PESSOA 12 (catálogo JSON) e PESSOA 13 (fila/montagem):
+       use showScreen('screen-status') para trocar de tela a partir
+       da lógica real. Ex.: showScreen(proximaTela);
+     ============================================================== */
+
+    // Helper público para a lógica do time
+    function showScreen(id) {
+      id = String(id).replace(/^#/, '');
+      if (document.getElementById(id)) {
+        location.hash = id;      // o CSS (:target) faz a troca de tela
+        window.scrollTo(0, 0);
+      }
+    }
+
+    // Mantém .active idêntico à tela visível (a lógica pode consultar
+    // document.querySelector('.screen.active') quando precisar)
+    function syncActive() {
+      var visible = location.hash ? location.hash.slice(1) : 'screen-home';
+      document.querySelectorAll('.screen').forEach(function (el) {
+        el.classList.toggle('active', el.id === visible);
+      });
+    }
+    // Sincroniza no clique, ANTES do hash mudar (evita "piscar" de tela:
+    // o CSS de :target e o de .active nunca ficam defasados)
+    document.addEventListener('click', function (e) {
+      var link = e.target && e.target.closest
+        ? e.target.closest('a[href^="#screen-"]')
+        : null;
+      if (link) {
+        var scr = document.getElementById(link.getAttribute('href').slice(1));
+        document.querySelectorAll('.screen').forEach(function (el) {
+          el.classList.toggle('active', el === scr);
+        });
+      }
+    });
+    // Mantém .active em dia com o histórico (botão voltar/avançar)
+    window.addEventListener('hashchange', syncActive);
+    syncActive();
+
+    /* ===== EXEMPLO DE SELEÇÃO (substituir quando a Pessoa 12
+             injetar o catálogo real — chame refreshSummary() depois) ===== */
+    function refreshSummary() {
+      var groups = ['cpu', 'gpu', 'ram', 'ssd'];
+      var checked = 0;
+      groups.forEach(function (g) {
+        var input = document.querySelector('input[name="' + g + '"]:checked');
+        var label = input ? input.dataset.label : '—';
+        var pick = document.getElementById('pick-' + g);   // selo no card
+        var sum = document.getElementById('summary-' + g); // resumo na fila
+        if (pick) pick.textContent = label;
+        if (sum) sum.textContent = label;
+        if (input) checked++;
+      });
+      var count = document.getElementById('parts-count');
+      if (count) count.textContent = checked + '/4';
+    }
+    document.querySelectorAll('.choice__input').forEach(function (input) {
+      input.addEventListener('change', refreshSummary);
+    });
+    refreshSummary();
+  </script>
+</body>
+</html>
