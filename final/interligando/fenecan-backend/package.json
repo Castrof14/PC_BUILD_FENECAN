@@ -1,0 +1,32 @@
+{
+  "name": "fenecan-backend",
+  "version": "1.0.0",
+  "description": "Backend único do PC Build Simulator - FENECAN (API + fila + banco + WebSocket da Unity)",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/integration.test.ts",
+    "unity:sim": "tsx tests/unity.simulator.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "dotenv": "^18.0.4",
+    "fastify": "^5.12.5",
+    "mysql2": "^3.24.4",
+    "ws": "^8.21.3",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

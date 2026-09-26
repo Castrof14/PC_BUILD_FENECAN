@@ -1,0 +1,13 @@
+{
+  "name": "fila-montagens",
+  "version": "1.0.0",
+  "description": "Banco de dados e gerenciamento da fila de montagens",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mysql2": "^3.10.0"
+  }
+}

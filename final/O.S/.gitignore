@@ -1,0 +1,15 @@
+node_modules/
+dist/
+web-dist/
+web/dist/
+.test-dist/
+.os-dist/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+.env
+.env.local

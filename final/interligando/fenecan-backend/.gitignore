@@ -1,0 +1,22 @@
+# dependências
+node_modules/
+
+# build do TypeScript
+dist/
+
+# ambiente — nunca versionar credenciais
+.env
+.env.local
+.env.*.local
+
+# logs e temporários
+*.log
+npm-debug.log*
+coverage/
+*.tsbuildinfo
+
+# sistema operacional / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
