@@ -1,0 +1,87 @@
+/* Reset and typographic defaults. */
+
+body {
+  margin: 0;
+  background: var(--frame-ink);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  font-weight: 900;
+  line-height: var(--lh-display);
+  text-transform: uppercase;
+}
+
+.heading-2 {
+  font-family: var(--font-ui);
+  font-size: var(--fs-heading-2);
+  font-weight: 700;
+  line-height: var(--lh-heading);
+  text-transform: uppercase;
+}
+
+.heading-3 {
+  font-family: var(--font-ui);
+  font-size: var(--fs-heading-3);
+  font-weight: 700;
+  line-height: var(--lh-heading);
+  text-transform: uppercase;
+}
+
+.ui-label {
+  font-family: var(--font-ui);
+  font-size: var(--fs-ui-label);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.caption {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  line-height: 1.35;
+}
+
+:focus-visible {
+  outline: 2px solid var(--frame-ink);
+  outline-offset: 2px;
+}
+
+.on-dark :focus-visible,
+.button-primary:focus-visible {
+  outline-color: var(--yellow-sticker);
+}
