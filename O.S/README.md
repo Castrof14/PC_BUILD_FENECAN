@@ -9,8 +9,25 @@ VISITANTE -> SITE (existente) -> API (existente) -> ESTE SISTEMA -> OPERADOR
                                                           +-> PC Building Simulator + Mods (futuro)
 ```
 
-Este repositório **não** contém site, API, backend, banco de dados nem QR Code.
+Este repositório **não** contém site, API, banco de dados nem QR Code.
 Ele apenas **consome** a API e cuida da tela do operador.
+
+---
+
+## Backend da O.S.
+
+Esta pasta também contém o **backend da O.S.**: regras de negócio, fluxo de status,
+repositório abstrato (hoje em memória) e a porta de entrada preparada para a API
+oficial. Ele fica em `src/domain`, `src/application`, `src/infrastructure` e
+`src/config`, e funciona sem a API e sem o banco oficiais.
+
+```bash
+npm test            # testes do backend da O.S.
+npm run os:start    # inicia o backend da O.S.
+```
+
+Documentação completa, com os guias para conectar o banco e a API oficiais:
+**[BACKEND.md](BACKEND.md)**.
 
 ---
 
