@@ -16,8 +16,11 @@
     "dev:operator": "npm run build:web && tsx watch src/main.ts",
     "build:web": "tsc -p tsconfig.web.json",
     "typecheck:operator": "tsc -p tsconfig.json --noEmit",
-    "clean": "node --eval \"const{rmSync}=require('node:fs');for(const d of ['dist','web-dist','web/dist'])rmSync(d,{recursive:true,force:true})\"",
-    "mock:api": "tsx tools/mock-api.ts"
+    "clean": "node --eval \"const{rmSync}=require('node:fs');for(const d of ['dist','web-dist','web/dist','.test-dist','.os-dist'])rmSync(d,{recursive:true,force:true})\"",
+    "mock:api": "tsx tools/mock-api.ts",
+    "os:build": "node --eval \"require('node:fs').rmSync('.os-dist',{recursive:true,force:true})\" && tsc -p tsconfig.os.json",
+    "os:start": "npm run os:build && node .os-dist/os-main.js",
+    "test": "node --eval \"require('node:fs').rmSync('.test-dist',{recursive:true,force:true})\" && tsc -p tsconfig.test.json && node --test \".test-dist/test/**/*.test.js\""
   },
   "dependencies": {
     "dotenv": "^16.4.7",
