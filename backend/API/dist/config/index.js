@@ -1,8 +1,8 @@
 import "dotenv/config";
-/** Porta do servidor; ignora valores inválidos e cai em 3000. */
+/** Porta do servidor; ignora valores inválidos e cai em 8080. */
 function parsePort(value) {
     const port = Number(value);
-    return Number.isInteger(port) && port > 0 && port <= 65535 ? port : 3000;
+    return Number.isInteger(port) && port > 0 && port <= 65535 ? port : 8080;
 }
 /**
  * Origens liberadas no CORS.

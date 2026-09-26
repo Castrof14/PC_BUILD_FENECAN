@@ -38,7 +38,7 @@ npm install
 npm run dev
 ```
 
-A API sobe em `http://localhost:3000`.
+A API sobe em `http://localhost:8080`.
 
 Para rodar a versão compilada:
 
@@ -55,7 +55,7 @@ O `.env` já vem pronto. O `.env.example` serve como modelo para o time.
 
 | Variável      | Padrão     | Descrição                                              |
 | ------------- | ---------- | ------------------------------------------------------ |
-| `PORT`        | `3000`     | Porta do servidor                                       |
+| `PORT`        | `8080`     | Porta do servidor                                       |
 | `HOST`        | `0.0.0.0`  | Interface de escuta                                     |
 | `CORS_ORIGIN` | _(vazio)_  | Opcional. Domínios permitidos, separados por vírgula.   |
 
@@ -75,7 +75,7 @@ CORS_ORIGIN=https://site.fenecan.com
 Verifica se o servidor está no ar.
 
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:8080/health
 ```
 
 ```json
@@ -91,7 +91,7 @@ curl http://localhost:3000/health
 Recebe uma nova configuração e cria a build com status inicial `WAITING`.
 
 ```bash
-curl -X POST http://localhost:3000/build \
+curl -X POST http://localhost:8080/build \
   -H "Content-Type: application/json" \
   -d '{
     "cpu": "ryzen-5-5600",
@@ -125,7 +125,7 @@ Os IDs são sequenciais e únicos por execução: `BUILD-001`, `BUILD-002`, ...
 Consulta uma build pelo identificador.
 
 ```bash
-curl http://localhost:3000/build/BUILD-001
+curl http://localhost:8080/build/BUILD-001
 ```
 
 ```json
@@ -205,10 +205,10 @@ Com o servidor rodando (`npm run dev`):
 
 ```bash
 # health
-curl http://localhost:3000/health
+curl http://localhost:8080/health
 
 # criar build
-curl -X POST http://localhost:3000/build \
+curl -X POST http://localhost:8080/build \
   -H "Content-Type: application/json" \
   -d '{
     "cpu": "ryzen-5-5600",
@@ -221,13 +221,13 @@ curl -X POST http://localhost:3000/build \
   }'
 
 # consultar build
-curl http://localhost:3000/build/BUILD-001
+curl http://localhost:8080/build/BUILD-001
 
 # build inexistente -> 404
-curl http://localhost:3000/build/BUILD-999
+curl http://localhost:8080/build/BUILD-999
 
 # validação -> 400
-curl -X POST http://localhost:3000/build \
+curl -X POST http://localhost:8080/build \
   -H "Content-Type: application/json" \
   -d '{ "cpu": 123, "gpu": null }'
 ```
