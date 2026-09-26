@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PC Build Simulator - Sistema Operador</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">PC</span>
+        <div class="brand-text">
+          <h1>Sistema Operador</h1>
+          <p id="api-url">API: -</p>
+        </div>
+      </div>
+
+      <div class="topbar-stats" id="stats">
+        <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Pedidos</span></div>
+        <div class="stat stat-new"><span class="stat-value" id="stat-new">0</span><span class="stat-label">Novos</span></div>
+        <div class="stat"><span class="stat-value" id="stat-pending">0</span><span class="stat-label">Pendentes</span></div>
+        <div class="stat"><span class="stat-value" id="stat-building">0</span><span class="stat-label">Montando</span></div>
+      </div>
+
+      <div class="topbar-actions">
+        <div id="connection" class="connection checking" role="status" aria-live="polite">
+          <span class="dot"></span>
+          <span id="connection-text">Conectando...</span>
+        </div>
+        <div class="clock" id="clock">--:--:--</div>
+        <button id="sound-toggle" class="ghost" type="button" title="Ativar/desativar som de novo pedido">Som: ON</button>
+        <button id="fullscreen" class="ghost" type="button" title="Tela cheia (F11)">Tela cheia</button>
+        <button id="refresh" class="ghost" type="button" title="Atualizar agora (R)">Atualizar</button>
+      </div>
+    </header>
+
+    <div id="offline-banner" class="banner hidden">
+      <strong>API DESCONECTADA</strong>
+      <span id="offline-detail">Aguardando resposta da API...</span>
+    </div>
+
+    <main class="layout">
+      <section class="panel list-panel">
+        <div class="filters" id="filters">
+          <button class="chip active" type="button" data-filter="ALL">Todos</button>
+          <button class="chip" type="button" data-filter="NEW">Novos</button>
+          <button class="chip" type="button" data-filter="PENDING">Pendentes</button>
+          <button class="chip" type="button" data-filter="ACCEPTED">Aceitos</button>
+          <button class="chip" type="button" data-filter="BUILDING">Montando</button>
+          <button class="chip" type="button" data-filter="COMPLETED">Concluidos</button>
+        </div>
+        <div id="order-list" class="order-list"></div>
+        <div class="list-footer">
+          <span id="last-update">Atualizado a cada -</span>
+          <button id="clear-new" class="link" type="button" hidden>limpar avisos</button>
+        </div>
+      </section>
+
+      <section class="panel detail-panel">
+        <div id="detail" class="detail"></div>
+      </section>
+    </main>
+
+    <footer class="statusbar">
+      <span class="hint"><kbd>1</kbd>-<kbd>9</kbd> selecionar</span>
+      <span class="hint"><kbd>A</kbd> aceitar</span>
+      <span class="hint"><kbd>M</kbd> montar</span>
+      <span class="hint"><kbd>C</kbd> concluir</span>
+      <span class="hint"><kbd>X</kbd> cancelar</span>
+      <span class="hint"><kbd>R</kbd> atualizar</span>
+      <span class="hint"><kbd>N</kbd> proximo novo</span>
+      <span class="spacer"></span>
+      <span id="status-message" class="status-message">Pronto</span>
+    </footer>
+
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
