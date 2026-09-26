@@ -64,6 +64,14 @@ Saída esperada:
 > `npm test` e `npm run os:start` compilam com `tsc` e rodam com `node`. Eles
 > não dependem de `tsx`/`esbuild`, que não funcionam em algumas versões do
 > macOS.
+>
+> Se `npm install` falhar com erro do `esbuild` (usado só pelas ferramentas da
+> tela do operador: vite e tsx), instale sem os scripts de instalação. O backend
+> da O.S. funciona normalmente assim:
+>
+> ```bash
+> npm install --ignore-scripts
+> ```
 
 ---
 

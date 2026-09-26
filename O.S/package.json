@@ -20,7 +20,7 @@
     "mock:api": "tsx tools/mock-api.ts",
     "os:build": "node --eval \"require('node:fs').rmSync('.os-dist',{recursive:true,force:true})\" && tsc -p tsconfig.os.json",
     "os:start": "npm run os:build && node .os-dist/os-main.js",
-    "test": "node --eval \"require('node:fs').rmSync('.test-dist',{recursive:true,force:true})\" && tsc -p tsconfig.test.json && node --test \".test-dist/test/**/*.test.js\""
+    "test": "node --eval \"require('node:fs').rmSync('.test-dist',{recursive:true,force:true})\" && tsc -p tsconfig.test.json && node scripts/run-tests.mjs"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
