@@ -649,6 +649,89 @@ body:has(.screen.active)  .screen:not(.active) { display: none; }
   background: var(--orange-500);
 }
 
+/* catálogo do PC Building Simulator (montado por renderCatalog()) */
+.card-section { margin-top: 10px; }
+.card-section:first-child { margin-top: 0; }
+
+/* cards novos são recolhíveis (<details>) — o visual segue o .part-card */
+details.part-card > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+details.part-card > summary::-webkit-details-marker { display: none; }
+
+details.part-card > summary:focus-visible {
+  outline: 3px solid var(--orange-500);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.part-card__chevron {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  align-self: center;
+  color: var(--gray);
+  transition: transform .2s ease;
+}
+
+details.part-card[open] .part-card__chevron { transform: rotate(180deg); }
+
+.catalog-search {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 14px;
+  padding: 0 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  font: inherit;
+  font-size: .88rem;
+  color: var(--ink);
+}
+
+.catalog-search:focus-visible {
+  outline: 3px solid var(--orange-500);
+  outline-offset: 2px;
+}
+
+/* listas longas rolam dentro do card */
+.option-list--scroll {
+  max-height: 360px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+}
+
+.option-group {
+  display: grid;
+  gap: 8px;
+}
+
+.option-group__title {
+  margin-top: 6px;
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+.option-list__empty {
+  padding: 8px 0;
+  font-size: .8rem;
+  color: var(--gray);
+  text-align: center;
+}
+
+/* display:block/grid/flex das classes acima venceria o atributo hidden */
+.choice[hidden],
+.option-group[hidden],
+.option-list__empty[hidden],
+.summary__row[hidden] { display: none; }
+
 /* barra de ação fixa no rodapé dos componentes */
 .actionbar {
   position: sticky;
@@ -1053,7 +1136,7 @@ body:has(.screen.active)  .screen:not(.active) { display: none; }
           <p class="hero__subtitle">Monte sua máquina do zero, envie para a fila e acompanhe a montagem em tempo real.</p>
 
           <ul class="feature-chips">
-            <li>4 categorias de peças</li>
+            <li id="chip-categories">4 categorias de peças</li>
             <li>Fila ao vivo</li>
             <li>Acompanhamento em tempo real</li>
           </ul>
@@ -1096,7 +1179,10 @@ body:has(.screen.active)  .screen:not(.active) { display: none; }
         </div>
       </div>
 
-      <div class="card-list">
+      <!-- Os 4 cards abaixo recebem as peças de pcbs-catalog.js; os demais
+           cards (placa-mãe, fonte, gabinete, refrigeração, periféricos...)
+           são criados por renderCatalog() com este mesmo markup. -->
+      <div class="card-list" id="card-list">
 
         <!-- ============================================================
              CARD: PROCESSADOR
@@ -1385,8 +1471,9 @@ body:has(.screen.active)  .screen:not(.active) { display: none; }
         </p>
       </div>
 
-      <!-- Resumo do pedido (preenchido pela seleção da tela anterior) -->
-      <div class="summary">
+      <!-- Resumo do pedido (preenchido pela seleção da tela anterior).
+           As linhas das categorias novas são criadas por renderCatalog(). -->
+      <div class="summary" id="build-summary">
         <p class="summary__title">Resumo da build</p>
         <p class="summary__row"><span class="summary__k">Processador</span><span class="summary__v" id="summary-cpu">—</span></p>
         <p class="summary__row"><span class="summary__k">Placa de vídeo</span><span class="summary__v" id="summary-gpu">—</span></p>
@@ -1471,6 +1558,9 @@ body:has(.screen.active)  .screen:not(.active) { display: none; }
 
   </main>
 
+  <!-- Catálogo de peças do PC Building Simulator (gerado — ver tools/gerar-catalogo-pcbs.mjs) -->
+  <script src="./pcbs-catalog.js"></script>
+
   <script>
   /* ==============================================================
      NAVEGAÇÃO + GANCHOS DE DEMO (sem frameworks, sem lógica pesada)
@@ -1517,25 +1607,226 @@ body:has(.screen.active)  .screen:not(.active) { display: none; }
     window.addEventListener('hashchange', syncActive);
     syncActive();
 
-    /* ===== EXEMPLO DE SELEÇÃO (substituir quando a Pessoa 12
-             injetar o catálogo real — chame refreshSummary() depois) ===== */
+    /* ===== CATÁLOGO DO PC BUILDING SIMULATOR =====================
+       Dados: pcbs-catalog.js (gerado de PCBS_Todos_os_IDs.txt).
+       - Categorias que já tinham card (cpu, gpu, ram, ssd) recebem as
+         peças no #catalog-<key> existente, depois das opções originais.
+       - As demais ganham um card recolhível com o mesmo markup .choice.
+       - O value de cada radio é o ID do jogo: é ele que vai para a API.
+       Sem pcbs-catalog.js a página continua com os 4 cards originais. */
+    var CATALOG = window.PCBS_CATALOG || null;
+    var CATEGORIES = CATALOG ? CATALOG.categories : [
+      { key: 'cpu', mode: 'required' }, { key: 'gpu', mode: 'required' },
+      { key: 'ram', mode: 'required' }, { key: 'ssd', mode: 'required' }
+    ];
+
+    // Ícones dos cards novos (mesmo traço dos ícones originais)
+    var FAN_ICON = '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.8"/><path d="M12 10.2C11 7 12.5 5 15 5.5M13.8 12c3.2-1 5.2.5 4.7 3M12 13.8c1 3.2-.5 5.2-3 4.7M10.2 12C7 13 5 11.5 5.5 9"/>';
+    var DROP_ICON = '<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/>';
+    var ICONS = {
+      motherboard: '<rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="6" height="6" rx="1"/><path d="M16 7h2M16 10h2M7 16.5h10"/>',
+      psu: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="10" cy="12" r="4"/><path d="M10 9.5V12M17 9h1.5M17 12h1.5M17 15h1.5"/>',
+      case: '<rect x="6" y="2.5" width="12" height="19" rx="2"/><circle cx="12" cy="14.5" r="3"/><path d="M9 6h6M9 8.5h6"/>',
+      cooler: FAN_ICON,
+      caseFan: FAN_ICON,
+      cpuBlock: DROP_ICON, radiator: DROP_ICON, reservoir: DROP_ICON,
+      pipe: DROP_ICON, fitting: DROP_ICON, coolant: DROP_ICON,
+      cable: '<path d="M4 20c0-6 4-6 8-8s8-2 8-8"/><path d="M2.5 18.5l3 3M18.5 2.5l3 3"/>',
+      decoration: '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4l-5.3 3 1.2-6-4.5-4.1 6-.7z"/>',
+      monitor: '<rect x="2.5" y="4" width="19" height="12.5" rx="1.5"/><path d="M9 20.5h6M12 16.5v4"/>',
+      keyboard: '<rect x="2" y="6.5" width="20" height="11" rx="2"/><path d="M6 10h.01M9.3 10h.01M12.6 10h.01M15.9 10h.01M18 10h.01M6 13.5h.01M18 13.5h.01M9 13.5h6"/>',
+      mouse: '<rect x="6.5" y="3" width="11" height="18" rx="5.5"/><path d="M12 3v6"/>',
+      mousePad: '<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M15 9.5a2 2 0 0 1 2-2"/>',
+      headset: '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/>',
+      microphone: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/>',
+      usbDrive: '<rect x="7" y="9" width="10" height="12.5" rx="2"/><path d="M9 9V3h6v6M10.5 5.5h.01M13.5 5.5h.01"/>'
+    };
+    var SVG_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
+
+    // Rótulo quando nada foi escolhido na categoria
+    var EMPTY_PICK = { required: '—', auto: 'Automático', optional: '—' };
+
+    function el(tag, className, text) {
+      var node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function partCount(category) {
+      return category.groups.reduce(function (sum, g) { return sum + g.parts.length; }, 0);
+    }
+
+    // Mesmo markup dos .choice escritos à mão no HTML
+    function createChoice(name, value, label, meta, checked) {
+      var choice = el('label', 'choice');
+      var input = el('input', 'choice__input');
+      input.type = 'radio';
+      input.name = name;
+      input.value = value;
+      input.dataset.label = label;
+      input.checked = !!checked;
+      var text = el('span', 'choice__text');
+      text.append(el('span', 'choice__name', label), el('span', 'choice__meta', meta));
+      var radio = el('span', 'choice__radio');
+      radio.setAttribute('aria-hidden', 'true');
+      var inner = el('span', 'choice__inner');
+      inner.append(text, radio);
+      choice.append(input, inner);
+      choice.dataset.search = (label + ' ' + value).toLowerCase();
+      return choice;
+    }
+
+    // Peças do jogo, agrupadas por tipo do arquivo (ex.: SSD / M.2 / HD)
+    function appendGroups(list, category) {
+      var fragment = document.createDocumentFragment();
+      category.groups.forEach(function (group) {
+        var box = el('div', 'option-group');
+        box.setAttribute('role', 'group');
+        box.setAttribute('aria-label', group.label);
+        box.append(el('p', 'option-group__title', group.label + ' · PC Building Simulator (' + group.parts.length + ')'));
+        group.parts.forEach(function (part) {
+          box.append(createChoice(category.key, part[0], part[1], part[0], false));
+        });
+        fragment.append(box);
+      });
+      list.append(fragment);
+      list.classList.add('option-list--scroll');
+    }
+
+    // Busca por nome ou ID dentro de um card
+    function createSearch(list, category) {
+      var search = el('input', 'catalog-search');
+      search.type = 'search';
+      search.placeholder = 'Buscar por nome ou ID (' + partCount(category) + ' peças)';
+      search.setAttribute('aria-label', 'Buscar peça');
+      search.setAttribute('aria-controls', list.id);
+      var empty = el('p', 'option-list__empty', 'Nenhuma peça encontrada.');
+      empty.hidden = true;
+      list.after(empty);
+      search.addEventListener('input', function () {
+        var query = search.value.trim().toLowerCase();
+        var shown = 0;
+        list.querySelectorAll('.choice').forEach(function (choice) {
+          var match = !query || choice.dataset.search.indexOf(query) !== -1;
+          choice.hidden = !match;
+          if (match) shown++;
+        });
+        list.querySelectorAll('.option-group').forEach(function (group) {
+          group.hidden = !group.querySelector('.choice:not([hidden])');
+        });
+        empty.hidden = shown > 0;
+      });
+      return search;
+    }
+
+    function createCard(category) {
+      var card = el('details', 'part-card');
+      card.id = 'part-' + category.key;
+
+      var head = el('summary', 'part-card__head');
+      var icon = el('span', 'part-card__icon');
+      icon.setAttribute('aria-hidden', 'true');
+      icon.innerHTML = SVG_OPEN + (ICONS[category.key] || ICONS.motherboard) + '</svg>';
+      var text = el('div', 'part-card__text');
+      text.append(
+        el('h2', 'part-card__title', category.title),
+        el('p', 'part-card__hint', category.hint + ' · ' + partCount(category) + ' peças')
+      );
+      var pick = el('span', 'part-card__pick', EMPTY_PICK[category.mode]);
+      pick.id = 'pick-' + category.key;
+      head.append(icon, text, pick);
+      head.insertAdjacentHTML('beforeend', '<svg class="part-card__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
+
+      var list = el('div', 'option-list');
+      list.id = 'catalog-' + category.key;
+      // "Automático" (placa-mãe/fonte/gabinete) ou "Nenhum" (opcionais):
+      // value vazio = o site não envia esta peça escolhida à mão.
+      list.append(category.mode === 'auto'
+        ? createChoice(category.key, '', 'Automático', 'O site escolhe uma peça compatível', true)
+        : createChoice(category.key, '', 'Nenhum', 'Não incluir na build', true));
+
+      card.append(head, list);
+      list.before(createSearch(list, category));
+
+      // As peças só entram no DOM quando o card é aberto pela primeira vez
+      card.addEventListener('toggle', function () {
+        if (card.open && !card.dataset.loaded) {
+          card.dataset.loaded = 'true';
+          appendGroups(list, category);
+        }
+      });
+      return card;
+    }
+
+    function createSummaryRow(category) {
+      var row = el('p', 'summary__row');
+      row.id = 'summary-row-' + category.key;
+      var value = el('span', 'summary__v', '—');
+      value.id = 'summary-' + category.key;
+      row.append(el('span', 'summary__k', category.title), value);
+      return row;
+    }
+
+    function renderCatalog() {
+      if (!CATALOG) return;
+      var cardList = document.getElementById('card-list');
+      var summary = document.getElementById('build-summary');
+      var section = null;
+
+      CATEGORIES.forEach(function (category) {
+        if (category.section !== section) {
+          section = category.section;
+          cardList.append(el('h2', 'eyebrow card-section', CATALOG.sections[section]));
+        }
+
+        var card = document.getElementById('part-' + category.key);
+        if (card) {
+          // card que já existia: mantém as opções originais e soma as do jogo
+          var list = document.getElementById('catalog-' + category.key);
+          list.querySelectorAll('.choice').forEach(function (choice) {
+            var input = choice.querySelector('.choice__input');
+            choice.dataset.search = (choice.textContent + ' ' + input.value).toLowerCase();
+          });
+          list.before(createSearch(list, category));
+          appendGroups(list, category);
+        } else {
+          card = createCard(category);
+          summary.append(createSummaryRow(category));
+        }
+        cardList.append(card);   // reordena na ordem das seções
+      });
+
+      var chip = document.getElementById('chip-categories');
+      if (chip) chip.textContent = CATEGORIES.length + ' categorias de peças';
+    }
+
     function refreshSummary() {
-      var groups = ['cpu', 'gpu', 'ram', 'ssd'];
+      var required = 0;
       var checked = 0;
-      groups.forEach(function (g) {
-        var input = document.querySelector('input[name="' + g + '"]:checked');
-        var label = input ? input.dataset.label : '—';
-        var pick = document.getElementById('pick-' + g);   // selo no card
-        var sum = document.getElementById('summary-' + g); // resumo na fila
+      CATEGORIES.forEach(function (category) {
+        var input = document.querySelector('input[name="' + category.key + '"]:checked');
+        var chosen = input && input.value;
+        var label = chosen ? input.dataset.label : EMPTY_PICK[category.mode];
+        var pick = document.getElementById('pick-' + category.key);   // selo no card
+        var sum = document.getElementById('summary-' + category.key); // resumo na fila
+        var row = document.getElementById('summary-row-' + category.key);
         if (pick) pick.textContent = label;
         if (sum) sum.textContent = label;
-        if (input) checked++;
+        if (row) row.hidden = category.mode === 'optional' && !chosen;
+        if (category.mode === 'required') {
+          required++;
+          if (chosen) checked++;
+        }
       });
       var count = document.getElementById('parts-count');
-      if (count) count.textContent = checked + '/4';
+      if (count) count.textContent = checked + '/' + required;
     }
-    document.querySelectorAll('.choice__input').forEach(function (input) {
-      input.addEventListener('change', refreshSummary);
+
+    renderCatalog();
+    // delegação: cobre também os radios criados depois (cards abertos sob demanda)
+    document.addEventListener('change', function (e) {
+      if (e.target.classList && e.target.classList.contains('choice__input')) refreshSummary();
     });
     refreshSummary();
   </script>
